@@ -6,7 +6,7 @@ from os.path import split
 
 file_dir = "/gpfs/csic_projects/tier3data/TreesPHYS14/PU20bx25/"
 
-rootfiles = [ "Tree_T2tt_425LSP325.root" ]
+rootfiles = [ "Tree_T2tt_425LSP325.root", "Tree_TTJets_MadSpin_0.root" ]
 
 o_dir = "./"              
 outfiles = []
