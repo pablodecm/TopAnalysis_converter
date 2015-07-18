@@ -24,6 +24,9 @@
 #include "mut_framework/mut_dataformats/interface/Jet.h"
 #include "mut_framework/mut_dataformats/interface/MET.h"
 
+#include "EventHighLevel.h"
+#include "mt2bisect.h"
+
 
 using namespace ROOT::Math;
 
@@ -129,6 +132,7 @@ class ConverterPHYS14 : public TSelector {
     std::vector<mut::Jet> * pfjets = nullptr;
     std::vector<mut::Lepton> * leptons = nullptr;
     mut::MET * pfmet = nullptr;
+    EventHighLevel * ev_high = nullptr;
 
     // TTree pointer
     TTree * ttree;
@@ -243,6 +247,7 @@ class ConverterPHYS14 : public TSelector {
    bool isVetoElec(unsigned iElec, float minPt = 20.);
    float elecIsolation(unsigned iElec);
    bool passJetID(unsigned iJet);
+   float getMT2( const mut::Lepton & lep0, const mut::Lepton & lep1, const mut::MET & met);
 
 
 };

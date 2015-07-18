@@ -12,7 +12,7 @@ stop_files = [ "Tree_T2tt_425LSP325.root",
               "Tree_T2tt_650LSP325.root",
               "Tree_T2tt_850LSP100.root"]  
 
-ttbar_files = ["Tree_TTJets_MadSpin_{}.root".format(n) for n in range(8)]
+ttbar_files = ["Tree_TTJets_MadSpin_{}.root".format(n) for n in range(1)]
 
 rootfiles = stop_files + ttbar_files
 

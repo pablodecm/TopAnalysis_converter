@@ -4,5 +4,6 @@
 namespace { 
   struct TopAnalysis_converter {
     ConverterPHYS14 dummy0;
+    EventHighLevel dummy1;
   };
 }

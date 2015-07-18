@@ -30,6 +30,7 @@ void ConverterPHYS14::SlaveBegin(TTree * /*tree*/)
   ttree->Branch("pfmet","mut::MET", &pfmet, 64000,1);
   ttree->Branch("pfjets","std::vector<mut::Jet>", &pfjets, 64000,1);
   ttree->Branch("leptons","std::vector<mut::Lepton>", &leptons, 64000,1);
+  ttree->Branch("ev_high","EventHighLevel", &ev_high, 64000,1);
 
   fOutput->Add(ttree);  
 
@@ -124,12 +125,33 @@ Bool_t ConverterPHYS14::Process(Long64_t entry)
   std::sort(leptons->begin(), leptons->end(), []( const mut::Lepton  & lhs,  const mut::Lepton & rhs) 
                                                   { return lhs.pt() < rhs.pt();  });
 
+  ev_high = new EventHighLevel();
+
   // event selection 
   if (leptons->size() == 2) { // two tight leptons
     if (leptons->at(0).charge()*leptons->at(1).charge()  < 0) { // opposite sign
       double mll = VectorUtil::InvariantMass(leptons->at(0), leptons->at(1));
-      if (mll > 20.0 && (nVetoLepton < 3)) { // low mll and extralepton veto
-        ttree->Fill();
+      if (mll > 20.0 && (nVetoLepton < 3) && (pfjets->size() > 1)) { // low mll and extralepton veto
+        if ((std::abs(leptons->at(0).pdgId()) + std::abs(leptons->at(1).pdgId())) == 24 ) {
+            
+            ev_high->met = pfmet->Et();
+            ev_high->dilept_inv_mass = mll;
+            ev_high->dilepton_MT2 = getMT2( leptons->at(0), leptons->at(1), *pfmet);
+            ev_high->d_phi_l_l = std::abs(VectorUtil::DeltaPhi(leptons->at(0), leptons->at(1)));
+            ev_high->d_phi_min_met_j = 10;
+            for ( const auto & jet : *pfjets) {
+              float d_phi_min_met_j =  std::abs(VectorUtil::DeltaPhi(*pfmet, jet));
+              if (d_phi_min_met_j < ev_high->d_phi_min_met_j) 
+                ev_high->d_phi_min_met_j = d_phi_min_met_j;
+            }
+            ev_high->d_phi_met_l0 = std::abs(VectorUtil::DeltaPhi(*pfmet, leptons->at(0)));
+            ev_high->d_phi_met_l1 = std::abs(VectorUtil::DeltaPhi(*pfmet, leptons->at(1)));
+            ev_high->d_phi_met_metll = std::abs(VectorUtil::DeltaPhi(*pfmet, 
+                                                    *pfmet+leptons->at(0)+leptons->at(1)));
+            
+            // only emu and mue channel
+            ttree->Fill();
+        }
       }
     }
   }
@@ -138,6 +160,7 @@ Bool_t ConverterPHYS14::Process(Long64_t entry)
   delete pfjets;
   delete pfmet;
   delete leptons;
+  delete ev_high;
 
   return true;
 }
@@ -379,3 +402,29 @@ bool ConverterPHYS14::passJetID(unsigned iJet) {
   return true;
 }
 
+
+float ConverterPHYS14::getMT2( const mut::Lepton & lep0, const mut::Lepton & lep1, const mut::MET & met) {
+    double pa[3];
+    double pb[3];
+    double pmiss[3];
+
+    pmiss[0] = 0.; // not required
+    pmiss[1] = met.px();
+    pmiss[2] = met.py();
+
+    pa[0] = 0.;
+    pa[1] = lep0.px();
+    pa[2] = lep0.py();
+
+    pb[0] = 0.;
+    pb[1] = lep1.px();
+    pb[2] = lep1.py();
+
+    mt2bisect* MT2bisect = new mt2bisect();
+    MT2bisect->set_verbose(0);
+    MT2bisect->set_momenta(pa, pb, pmiss);
+    MT2bisect->set_mn(0.); // test mass
+    float mt2 = MT2bisect->get_mt2();
+    delete MT2bisect;
+    return mt2;
+}
